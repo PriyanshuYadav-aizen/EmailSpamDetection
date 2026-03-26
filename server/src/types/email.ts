@@ -1,7 +1,8 @@
 export interface EmailRecord {
-    id?: number;
-    content: string;
-    prediction: "spam" | "not_spam";
-    confidence?: number;
-    created_at?: Date;
-  }
+  id?: string;
+  content: string;
+  prediction: "spam" | "not_spam";
+  confidence?: number;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
