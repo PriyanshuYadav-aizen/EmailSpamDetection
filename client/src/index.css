@@ -1,17 +1,414 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800&display=swap");
 @import "tailwindcss";
 
+/* ─── Design Tokens ─────────────────────────────────────────── */
 :root {
-  font-family: "DM Sans", system-ui, sans-serif;
+  --bg-root:       #05090f;
+  --bg-surface:    #0b1120;
+  --bg-card:       #0f192e;
+  --bg-input:      #07101f;
+  --bg-chrome:     rgba(255, 255, 255, 0.018);
+
+  --border-subtle:  rgba(255, 255, 255, 0.055);
+  --border-mid:     rgba(255, 255, 255, 0.09);
+  --border-active:  rgba(96, 165, 250, 0.45);
+
+  --accent:         #3b82f6;
+  --accent-bright:  #60a5fa;
+  --accent-dim:     rgba(59, 130, 246, 0.08);
+  --accent-glow:    rgba(59, 130, 246, 0.22);
+
+  --spam-bg:      rgba(220, 38, 38, 0.07);
+  --spam-border:  rgba(220, 38, 38, 0.22);
+  --spam-text:    #fca5a5;
+  --spam-label:   #f87171;
+
+  --safe-bg:      rgba(20, 184, 166, 0.07);
+  --safe-border:  rgba(20, 184, 166, 0.22);
+  --safe-text:    #5eead4;
+  --safe-label:   #2dd4bf;
+
+  --text-primary:   #dde6f0;
+  --text-secondary: #8a9db8;
+  --text-muted:     #374e68;
+
+  --radius-sm:  8px;
+  --radius-md:  12px;
+  --radius-lg:  16px;
+  --radius-xl:  22px;
+
+  --t-fast:   140ms ease;
+  --t-smooth: 270ms cubic-bezier(0.4, 0, 0.2, 1);
+  --t-spring: 420ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  font-size: 16px;
   line-height: 1.5;
-  font-weight: 400;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+*,*::before,*::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
 body {
   margin: 0;
-  min-width: 320px;
   min-height: 100vh;
+  background-color: var(--bg-root);
+  color: var(--text-primary);
+}
+
+/* ─── Scrollbar ──────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.07); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.14); }
+
+/* ─── Keyframes ──────────────────────────────────────────────── */
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fillBar {
+  from { width: 0%; }
+}
+@keyframes spinnerRing {
+  to { transform: rotate(360deg); }
+}
+@keyframes pulseRing {
+  0%   { transform: scale(1);   opacity: 0.55; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+@keyframes liveDot {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.2; }
+}
+@keyframes shimmer {
+  from { left: -60%; }
+  to   { left: 160%; }
+}
+@keyframes rotateBorder {
+  0%   { background-position: 0% 50%;   }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%;   }
+}
+@keyframes riskBar {
+  from { transform: scaleY(0); }
+  to   { transform: scaleY(1); }
+}
+
+/* ─── Gradient Card Border ───────────────────────────────────── */
+.gradient-card-border {
+  background: linear-gradient(
+    145deg,
+    rgba(59, 130, 246, 0.6) 0%,
+    rgba(255, 255, 255, 0.04) 40%,
+    rgba(20, 184, 166, 0.4) 100%
+  );
+  border-radius: calc(var(--radius-xl) + 1px);
+  padding: 1px;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.03),
+    0 48px 110px rgba(0, 0, 0, 0.7),
+    0 12px 40px rgba(0, 0, 0, 0.45),
+    0 0 90px rgba(59, 130, 246, 0.07);
+}
+
+/* ─── Inner card surface ─────────────────────────────────────── */
+.card-surface {
+  background: var(--bg-surface);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  position: relative;
+}
+
+/* ─── Ambient dot grid ───────────────────────────────────────── */
+.dot-grid {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(255,255,255,0.022) 1px, transparent 1px);
+  background-size: 24px 24px;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* ─── Pulse Rings ────────────────────────────────────────────── */
+.pulse-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(59, 130, 246, 0.22);
+  animation: pulseRing 3.2s ease-out infinite;
+  pointer-events: none;
+}
+.pulse-ring:nth-child(2) { animation-delay: 1.4s; }
+
+/* ─── Live dot ───────────────────────────────────────────────── */
+.live-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  animation: liveDot 2s ease-in-out infinite;
+}
+
+/* ─── Scan status chip ───────────────────────────────────────── */
+.scan-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: 1px solid;
+  transition: all var(--t-smooth);
+  user-select: none;
+}
+
+/* ─── Email chrome bar ───────────────────────────────────────── */
+.email-chrome-bar {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 15px;
+  background: var(--bg-chrome);
+  border: 1.5px solid var(--border-subtle);
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  transition: border-color var(--t-smooth);
+}
+.textarea-wrapper:focus-within .email-chrome-bar {
+  border-color: var(--border-active);
+  border-bottom-color: rgba(59,130,246,0.12);
+}
+
+.chrome-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ─── Textarea ───────────────────────────────────────────────── */
+.email-textarea {
+  display: block;
+  width: 100%;
+  background: var(--bg-input);
+  border: 1.5px solid var(--border-subtle);
+  border-top: none;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.875rem;
+  line-height: 1.75;
+  padding: 14px 16px;
+  resize: vertical;
+  min-height: 155px;
+  outline: none;
+  transition: border-color var(--t-smooth), box-shadow var(--t-smooth);
+}
+.email-textarea::placeholder { color: var(--text-muted); }
+.textarea-wrapper:focus-within .email-textarea {
+  border-color: var(--border-active);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.08);
+}
+
+/* ─── Analyse Button ─────────────────────────────────────────── */
+.analyze-btn {
+  width: 100%;
+  padding: 13px 24px;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+  color: #fff;
+  background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 55%, #2563eb 100%);
+  background-size: 200% 200%;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  position: relative;
+  overflow: hidden;
+  transition: transform var(--t-fast), box-shadow var(--t-smooth), background-position var(--t-smooth);
+  box-shadow:
+    0 4px 22px rgba(59, 130, 246, 0.38),
+    0 1px 4px rgba(0,0,0,0.5),
+    inset 0 1px 0 rgba(255,255,255,0.12);
+}
+.analyze-btn::after {
+  content: "";
+  position: absolute;
+  width: 50%;
+  height: 100%;
+  top: 0;
+  left: -60%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  transition: left 0.55s ease;
+}
+.analyze-btn:hover:not(:disabled)::after { left: 140%; }
+.analyze-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background-position: 100% 0%;
+  box-shadow:
+    0 8px 32px rgba(59, 130, 246, 0.48),
+    0 2px 8px rgba(0,0,0,0.5),
+    inset 0 1px 0 rgba(255,255,255,0.14);
+}
+.analyze-btn:active:not(:disabled) {
+  transform: translateY(0) scale(0.997);
+  box-shadow: 0 2px 10px rgba(59, 130, 246, 0.2);
+}
+.analyze-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* ─── Spinner ────────────────────────────────────────────────── */
+.spinner {
+  width: 15px;
+  height: 15px;
+  border: 2px solid rgba(255,255,255,0.18);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spinnerRing 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+/* ─── Result Card ────────────────────────────────────────────── */
+.result-card {
+  border-radius: var(--radius-lg);
+  border: 1.5px solid;
+  padding: 18px 20px 20px;
+  animation: fadeSlideUp var(--t-smooth) both;
+  position: relative;
+  overflow: hidden;
+}
+.result-card.spam { background: var(--spam-bg); border-color: var(--spam-border); }
+.result-card.safe { background: var(--safe-bg); border-color: var(--safe-border); }
+
+/* Subtle top gradient tint on result card */
+.result-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, currentColor, transparent);
+  opacity: 0.15;
+}
+
+/* ─── Metrics Grid ───────────────────────────────────────────── */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.metric-cell {
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+}
+.metric-label {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 7px;
+}
+.metric-value {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Risk bars ──────────────────────────────────────────────── */
+.risk-blocks {
+  display: flex;
+  gap: 3px;
+  align-items: flex-end;
+  margin-top: 7px;
+}
+.risk-block {
+  width: 8px;
+  border-radius: 2px;
+  transition: background 0.45s ease;
+  transform-origin: bottom;
+  animation: riskBar 0.4s ease both;
+}
+
+/* ─── Confidence bar ─────────────────────────────────────────── */
+.confidence-track {
+  width: 100%;
+  height: 4px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 100px;
+  overflow: hidden;
+}
+.confidence-fill {
+  height: 100%;
+  border-radius: 100px;
+  animation: fillBar 700ms cubic-bezier(0.4, 0, 0.2, 1) both;
+  transition: width 700ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.confidence-fill.spam { background: linear-gradient(90deg, #991b1b, #ef4444); }
+.confidence-fill.safe { background: linear-gradient(90deg, #134e4a, #2dd4bf); }
+
+/* ─── Error banner ───────────────────────────────────────────── */
+.error-banner {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: rgba(239, 68, 68, 0.06);
+  border: 1px solid rgba(239, 68, 68, 0.18);
+  color: #fca5a5;
+  font-size: 0.8rem;
+  font-weight: 500;
+  animation: fadeSlideUp var(--t-smooth) both;
+}
+
+/* ─── Stat chips ─────────────────────────────────────────────── */
+.stat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  background: rgba(59, 130, 246, 0.07);
+  border: 1px solid rgba(96, 165, 250, 0.11);
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--accent-bright);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+/* ─── Glow divider ───────────────────────────────────────────── */
+.glow-divider {
+  width: 28px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), transparent);
+  border-radius: 2px;
+  margin: 12px 0 14px;
+}
+
+/* ─── Mobile ─────────────────────────────────────────────────── */
+@media (max-width: 680px) {
+  .main-grid { grid-template-columns: 1fr !important; }
+  .left-panel { border-right: none !important; border-bottom: 1px solid var(--border-subtle) !important; padding: 32px 28px !important; }
+  .right-panel { padding: 28px !important; }
 }
