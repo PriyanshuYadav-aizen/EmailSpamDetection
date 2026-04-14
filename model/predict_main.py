@@ -68,7 +68,7 @@ def predict(text):
     # lstm
     seq = tokenizer.texts_to_sequences([cleaned])
     padded = pad_sequences(seq, maxlen=max_len)
-    lstm_prob = lstm_model.predict(padded)[0][0]
+    lstm_prob = lstm_model.predict(padded, verbose=0)[0][0]
 
     # final scores
     final_score = (
