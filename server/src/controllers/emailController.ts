@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import axios from "axios";
 import Email from "../models/Email";
 
 export const analyzeEmail = async (req: Request, res: Response) => {
@@ -10,10 +11,22 @@ export const analyzeEmail = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Email content is required" });
     }
 
-    // 🔥 Dummy prediction (we will replace with ML later)
-    const isSpam = content.toLowerCase().includes("win");
-    const prediction = isSpam ? "spam" : "not_spam";
-    const confidence = isSpam ? 0.85 : 0.15;
+    const mlApiUrl = process.env.ML_API_URL;
+
+    if (!mlApiUrl) {
+      return res.status(500).json({ message: "ML service URL is not configured" });
+    }
+
+    const modelResponse = await axios.post(
+      `${mlApiUrl.replace(/\/$/, "")}/predict`,
+      { content },
+      { timeout: 30000 }
+    );
+
+    const modelLabel = String(modelResponse.data?.label ?? "").toUpperCase();
+    const score = Number(modelResponse.data?.score ?? 0);
+    const prediction = modelLabel === "SPAM" ? "spam" : "not_spam";
+    const confidence = prediction === "spam" ? score : 1 - score;
 
     const savedEmail = await Email.create({
       content,
@@ -28,6 +41,11 @@ export const analyzeEmail = async (req: Request, res: Response) => {
     });
 
   } catch (err: unknown) {
+    if (axios.isAxiosError(err)) {
+      console.error("Model API Error:", err.response?.data ?? err.message);
+      return res.status(503).json({ message: "ML service unavailable" });
+    }
+
     console.error("Analyze Email Error:", err);
     return res.status(500).json({ message: "Server error" });
   }

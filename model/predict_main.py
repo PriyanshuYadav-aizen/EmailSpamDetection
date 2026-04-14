@@ -1,4 +1,6 @@
-# spam detection — tf-idf + lstm + rule engine
+"""Spam detection inference helpers."""
+
+from pathlib import Path
 import joblib
 import re
 import string
@@ -34,12 +36,19 @@ def rule_engine(text):
     return min(score / 5, 1.0)
 
 
-#load models
-tfidf_model = joblib.load("spam_model.pkl")
-vectorizer = joblib.load("vectorizer.pkl")
+BASE_DIR = Path(__file__).resolve().parent
 
-lstm_model = load_model("lstm_model.keras")
-tokenizer = joblib.load("tokenizer.pkl")
+
+def load_artifact(filename: str):
+    return joblib.load(BASE_DIR / filename)
+
+
+#load models
+tfidf_model = load_artifact("spam_model.pkl")
+vectorizer = load_artifact("vectorizer.pkl")
+
+lstm_model = load_model(BASE_DIR / "lstm_model.keras")
+tokenizer = load_artifact("tokenizer.pkl")
 
 max_len = 100
 

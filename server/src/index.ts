@@ -13,6 +13,10 @@ const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN;
 app.use(cors(CLIENT_ORIGIN ? { origin: CLIENT_ORIGIN } : undefined));
 app.use(express.json());
 
+app.get("/health", (_req, res) => {
+  res.status(200).json({ status: "ok" });
+});
+
 app.use("/api", emailRoutes);
 
 const startServer = async () => {
