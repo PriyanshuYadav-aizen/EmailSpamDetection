@@ -23,9 +23,17 @@ export const analyzeEmail = async (req: Request, res: Response) => {
       { timeout: 30000 }
     );
 
-    const modelLabel = String(modelResponse.data?.label ?? "").toUpperCase();
-    const score = Number(modelResponse.data?.score ?? 0);
-    const prediction = modelLabel === "SPAM" ? "spam" : "not_spam";
+    const rawVerdict = String(
+      modelResponse.data?.verdict ?? modelResponse.data?.label ?? ""
+    ).toUpperCase();
+    const rawScore = Number(
+      modelResponse.data?.confidence ?? modelResponse.data?.score
+    );
+    const score = Number.isFinite(rawScore)
+      ? Math.max(0, Math.min(1, rawScore))
+      : 0;
+
+    const prediction = rawVerdict === "SPAM" ? "spam" : "not_spam";
     const confidence = prediction === "spam" ? score : 1 - score;
 
     const savedEmail = await Email.create({

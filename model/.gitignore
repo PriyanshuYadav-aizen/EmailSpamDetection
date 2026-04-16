@@ -1,4 +1,8 @@
 venv/
+.venv/
 __pycache__/
 *.pyc
+*.pyo
 enron.csv
+*_metrics.json
+.env

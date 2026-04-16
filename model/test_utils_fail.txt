@@ -1,0 +1,43 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.6, pytest-8.4.1, pluggy-1.6.0
+rootdir: C:\Users\Akhil\Desktop\EmailSpamDetection\model
+configfile: pyproject.toml
+plugins: anyio-4.10.0
+collected 11 items
+
+tests\test_utils.py ....F...F..                                          [100%]
+
+================================== FAILURES ===================================
+______________________ TestCleanText.test_removes_digits ______________________
+
+self = <model.tests.test_utils.TestCleanText object at 0x000001DB6754CA70>
+
+    def test_removes_digits(self):
+>       assert clean_text("order 12345 confirmed") == "order  confirmed"
+E       AssertionError: assert 'order confirmed' == 'order  confirmed'
+E         
+E         - order  confirmed
+E         ?      -
+E         + order confirmed
+
+tests\test_utils.py:30: AssertionError
+______________________ TestCleanText.test_full_pipeline _______________________
+
+self = <model.tests.test_utils.TestCleanText object at 0x000001DB674F1E50>
+
+    def test_full_pipeline(self):
+        raw = "VISIT http://spam.com ? win 500$ NOW!!!"
+        result = clean_text(raw)
+>       assert result == "visit  win  now"
+E       AssertionError: assert 'visit ? win now' == 'visit  win  now'
+E         
+E         - visit  win  now
+E         ?            -
+E         + visit ? win now
+E         ?       +
+
+tests\test_utils.py:44: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_utils.py::TestCleanText::test_removes_digits - AssertionErr...
+FAILED tests/test_utils.py::TestCleanText::test_full_pipeline - AssertionErro...
+========================= 2 failed, 9 passed in 0.30s =========================

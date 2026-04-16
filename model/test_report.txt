@@ -1,0 +1,32 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.6, pytest-8.4.1, pluggy-1.6.0
+rootdir: C:\Users\Akhil\Desktop\EmailSpamDetection\model
+configfile: pyproject.toml
+plugins: anyio-4.10.0
+collected 47 items
+
+tests\test_api.py ...........                                            [ 23%]
+tests\test_config.py .....                                               [ 34%]
+tests\test_exceptions.py ......                                          [ 46%]
+tests\test_predict.py ..............                                     [ 76%]
+tests\test_utils.py ........F..                                          [100%]
+
+================================== FAILURES ===================================
+______________________ TestCleanText.test_full_pipeline _______________________
+
+self = <model.tests.test_utils.TestCleanText object at 0x00000216B5135250>
+
+    def test_full_pipeline(self):
+        raw = "VISIT http://spam.com — win 500$ NOW!!!"
+        result = clean_text(raw)
+>       assert result == "visit win now"
+E       AssertionError: assert 'visit — win now' == 'visit win now'
+E         
+E         - visit win now
+E         + visit — win now
+E         ?       ++
+
+tests\test_utils.py:44: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_utils.py::TestCleanText::test_full_pipeline - AssertionErro...
+======================== 1 failed, 46 passed in 22.23s ========================
