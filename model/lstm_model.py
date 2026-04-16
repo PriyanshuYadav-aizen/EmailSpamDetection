@@ -12,9 +12,8 @@ from tensorflow.keras.layers import Embedding, LSTM, Dense, Dropout, Bidirection
 
 
 def clean_text(text):
-    # normalize and remove noise
     text = text.lower()
-    text = re.sub(r"http\S+|www\S+", "", text)
+    text = re.sub(r"http\S+|www\S+", " suspiciouslink ", text)
     text = text.translate(str.maketrans("", "", string.punctuation))
     text = re.sub(r"\d+", "", text)
     text = re.sub(r"\s+", " ", text).strip()
@@ -34,7 +33,7 @@ df = df.dropna()
 df["text"] = df["text"].astype(str).apply(clean_text)
 
 
-# augment with spam samples — watch the ratio if dataset is small
+# augmenting
 extra_texts = [
     # direct spam
     "free money now",
@@ -59,13 +58,26 @@ extra_texts = [
     # real-like sentences
     "dont you want to make money easily",
     "you can earn money from home without effort",
-    "people are earning money from this simple trick"
+    "people are earning money from this simple trick",
+    
+    # links
+    "urgent your account will be suspended please click the link http://fake-login.com",
+    "please click the link below to verify your identity http://secure-update.com",
+    "send your bank details to claim reward http://prize-claim.com",
+    "verify your account immediately by clicking http://verify-account.com",
+    "unauthorized login attempt click here to secure account http://alert-login.com",
+    "your password expires in 24 hours reset it here http://reset-password.com",
+    "urgent action required click the link to prevent suspension http://login.com"
 ]
+
 extra_texts = extra_texts * 600
+
 extra_df = pd.DataFrame({
     "text": extra_texts,
     "label": [1] * len(extra_texts)
 })
+
+extra_df["text"] = extra_df["text"].apply(clean_text)
 
 df = pd.concat([df, extra_df], ignore_index=True)
 
@@ -91,7 +103,7 @@ X_train_pad = pad_sequences(X_train_seq, maxlen=max_len)
 X_test_pad = pad_sequences(X_test_seq, maxlen=max_len)
 
 
-# embedding → bidirectional lstm → dropout → binary output
+# embedding--bidirectional_lstm--dropout--binary_output
 model = Sequential([
     Embedding(input_dim=10000, output_dim=128, input_length=max_len),
     Bidirectional(LSTM(64)),
@@ -104,7 +116,6 @@ model.compile(
     optimizer='adam',
     metrics=['accuracy']
 )
-
 
 model.fit(X_train_pad, y_train, epochs=5, batch_size=64)
 
@@ -119,12 +130,13 @@ joblib.dump(tokenizer, "tokenizer.pkl")
 
 
 # quick sanity check
-test = ["You won a lottery claim your prize now"]
+test = ["urgent your account will be suspended please click the link http://fake-login.com"]
 test_clean = [clean_text(t) for t in test]
 test_seq = tokenizer.texts_to_sequences(test_clean)
 test_pad = pad_sequences(test_seq, maxlen=max_len)
 
 prediction = model.predict(test_pad)
 
-print("\nPrediction score:", prediction[0][0])
+print("\nTest Input:", test[0])
+print("Prediction score:", prediction[0][0])
 print("Meaning:", "SPAM" if prediction[0][0] > 0.5 else "HAM")

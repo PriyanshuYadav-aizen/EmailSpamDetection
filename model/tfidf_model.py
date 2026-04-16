@@ -12,7 +12,8 @@ from sklearn.metrics import accuracy_score, classification_report
 def clean_text(text):
     # normalize and remove noise
     text = text.lower()
-    text = re.sub(r"http\S+|www\S+", "", text)
+    # Replace with a heavy keyword instead of deleting
+    text = re.sub(r"http\S+|www\S+", " suspiciouslink ", text)
     text = text.translate(str.maketrans("", "", string.punctuation))
     text = re.sub(r"\d+", "", text)
     text = re.sub(r"\s+", " ", text).strip()
@@ -32,34 +33,52 @@ df = df.dropna()
 df["text"] = df["text"].astype(str).apply(clean_text)
 
 
-# augment with spam samples — watch the ratio if dataset is small
+# augmenting
 extra_texts = [
     # direct spam
     "free money now",
     "win cash instantly",
     "claim your prize now",
-    # conversational spam — harder for the model to catch
-    "someone told me about free money hacks",
-    "i heard you can earn money fast online",
-    "have you seen this trick to make money",
-    "my friend showed me a way to get rich quick",
-    "you should try this easy money method",
-    "people are making money easily from this",
-    "i found a way to earn money without effort",
-    # mixed patterns
-    "click here to learn how to make money",
-    "this is not a scam earn money fast",
-    "earn money from home no experience needed",
-    # soft urgency
-    "you might want to check this offer",
-    "just sharing this opportunity with you",
-    "thought you might be interested in this offer"
-] * 400
+
+    # conversational spam
+    "my friend told me about a way to make money online",
+    "someone showed me a trick to earn money easily",
+    "you should try this method to get rich quickly",
+    "i heard people are making money from this",
+    "my grandma told me about free money hacks",
+    "i found a way to earn money without doing much",
+    "this might help you earn money fast",
+    "have you seen this easy money trick",
+
+    # mixed tone
+    "this is not a scam you can earn money online",
+    "just sharing a way to make money from home",
+    "thought you might like this earning opportunity",
+
+    # real-like sentences
+    "dont you want to make money easily",
+    "you can earn money from home without effort",
+    "people are earning money from this simple trick",
+    
+    # links
+    "urgent your account will be suspended please click the link http://fake-login.com",
+    "please click the link below to verify your identity http://secure-update.com",
+    "send your bank details to claim reward http://prize-claim.com",
+    "verify your account immediately by clicking http://verify-account.com",
+    "unauthorized login attempt click here to secure account http://alert-login.com",
+    "your password expires in 24 hours reset it here http://reset-password.com",
+    "urgent action required click the link to prevent suspension http://login.com"
+]
+
+extra_texts = extra_texts * 600
 
 extra_df = pd.DataFrame({
     "text": extra_texts,
     "label": [1] * len(extra_texts)
 })
+
+
+extra_df["text"] = extra_df["text"].apply(clean_text)
 
 df = pd.concat([df, extra_df], ignore_index=True)
 
@@ -103,8 +122,8 @@ joblib.dump(model, "spam_model.pkl")
 joblib.dump(vectorizer, "vectorizer.pkl")
 
 
-# quick sanity check
-test = ["free money hacks"]
+# quicksanity check
+test = ["urgent your account will be suspended please click the link http://fake-login.com"]
 test_clean = [clean_text(t) for t in test]
 test_vec = vectorizer.transform(test_clean)
 
