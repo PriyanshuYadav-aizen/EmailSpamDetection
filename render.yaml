@@ -1,0 +1,55 @@
+# Render Blueprint — EmailSpamDetection
+# Deploys 3 services: Python ML API, Node.js server, React static site
+
+services:
+  # ── 1. Python ML Model API (FastAPI + Docker) ──────────────────────────
+  - type: web
+    name: spam-model-api
+    runtime: docker
+    region: oregon
+    rootDir: model
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 5001
+
+  # ── 2. Node.js Express Backend ─────────────────────────────────────────
+  - type: web
+    name: spam-node-server
+    runtime: node
+    region: oregon
+    rootDir: server
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 5000
+      - key: MONGO_URI
+        sync: false  # You'll enter this manually in the Render dashboard
+      - key: CLIENT_ORIGIN
+        fromService:
+          name: spam-client
+          type: web
+          property: url
+      - key: ML_API_URL
+        fromService:
+          name: spam-model-api
+          type: web
+          property: url
+
+  # ── 3. React/Vite Static Frontend ─────────────────────────────────────
+  - type: web
+    name: spam-client
+    runtime: static
+    region: oregon
+    rootDir: client
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    plan: free
+    envVars:
+      - key: VITE_API_URL
+        sync: false  # Set to https://spam-node-server.onrender.com/api after deploy

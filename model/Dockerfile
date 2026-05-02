@@ -24,9 +24,9 @@ COPY . .
 RUN useradd --create-home appuser
 USER appuser
 
-EXPOSE 5001
+EXPOSE ${PORT:-5001}
 
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:5001/health')"
+    CMD python -c "import os, urllib.request; urllib.request.urlopen(f'http://localhost:{os.environ.get(\"PORT\",5001)}/health')"
 
-CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "5001"]
+CMD uvicorn api:app --host 0.0.0.0 --port ${PORT:-5001}
