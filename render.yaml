@@ -31,21 +31,14 @@ services:
       - key: MONGO_URI
         sync: false  # You'll enter this manually in the Render dashboard
       - key: CLIENT_ORIGIN
-        fromService:
-          name: spam-client
-          type: web
-          property: url
+        sync: false  # Set to your client URL (e.g., https://spam-client.onrender.com)
       - key: ML_API_URL
-        fromService:
-          name: spam-model-api
-          type: web
-          property: url
+        sync: false  # Set to your ML API URL (e.g., https://spam-model-api.onrender.com)
 
   # ── 3. React/Vite Static Frontend ─────────────────────────────────────
   - type: web
     name: spam-client
     runtime: static
-    region: oregon
     rootDir: client
     buildCommand: npm install && npm run build
     staticPublishPath: dist
