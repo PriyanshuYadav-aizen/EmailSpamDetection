@@ -1,6 +1,21 @@
 import { Request, Response } from "express";
 import axios from "axios";
+import { randomUUID } from "crypto";
+import mongoose from "mongoose";
 import Email from "../models/Email";
+
+type StoredEmail = {
+  _id: string;
+  content: string;
+  prediction: string;
+  confidence: number;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+const fallbackEmails: StoredEmail[] = [];
+
+const isMongoConnected = () => mongoose.connection.readyState === 1;
 
 export const analyzeEmail = async (req: Request, res: Response) => {
   try {
@@ -36,11 +51,26 @@ export const analyzeEmail = async (req: Request, res: Response) => {
     const prediction = rawVerdict === "SPAM" ? "spam" : "not_spam";
     const confidence = prediction === "spam" ? score : 1 - score;
 
-    const savedEmail = await Email.create({
-      content,
-      prediction,
-      confidence,
-    });
+    const savedEmail = isMongoConnected()
+      ? await Email.create({
+          content,
+          prediction,
+          confidence,
+        })
+      : (() => {
+          const now = new Date();
+          const email = {
+            _id: randomUUID(),
+            content,
+            prediction,
+            confidence,
+            createdAt: now,
+            updatedAt: now,
+          } satisfies StoredEmail;
+
+          fallbackEmails.unshift(email);
+          return email;
+        })();
 
     return res.status(200).json({
       id: savedEmail._id,
@@ -61,7 +91,11 @@ export const analyzeEmail = async (req: Request, res: Response) => {
 
 export const getEmails = async (_req: Request, res: Response) => {
   try {
-    const emails = await Email.find().sort({ createdAt: -1 });
+    const emails = isMongoConnected()
+      ? await Email.find().sort({ createdAt: -1 })
+      : [...fallbackEmails].sort(
+          (left, right) => right.createdAt.getTime() - left.createdAt.getTime()
+        );
     return res.status(200).json(emails);
   } catch (err: unknown) {
     console.error("Get Emails Error:", err);

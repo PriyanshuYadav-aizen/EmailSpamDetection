@@ -9,8 +9,25 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN;
+const allowedOrigins = [
+  CLIENT_ORIGIN,
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "https://spam-client.onrender.com",
+].filter((origin): origin is string => Boolean(origin));
 
-app.use(cors(CLIENT_ORIGIN ? { origin: CLIENT_ORIGIN } : undefined));
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error(`CORS blocked for origin: ${origin}`));
+    },
+  })
+);
 app.use(express.json());
 
 app.get("/health", (_req, res) => {
