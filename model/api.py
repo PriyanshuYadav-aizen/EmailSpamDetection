@@ -15,10 +15,13 @@ Features
 
 from __future__ import annotations
 
+import asyncio
 import logging
+import os
 import time
 import uuid
 from contextlib import asynccontextmanager
+from urllib.request import urlopen
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -36,15 +39,41 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# ── Keep-alive pinger ────────────────────────────────────────────────────
+# Render free-tier spins down services after ~15 min of inactivity.
+# We self-ping /health every 5 min to stay awake.
+
+KEEP_ALIVE_INTERVAL = 5 * 60  # seconds
+
+
+async def _keep_alive_loop():
+    """Background coroutine that pings our own /health endpoint."""
+    port = os.environ.get("PORT", "5001")
+    url = f"http://0.0.0.0:{port}/health"
+    while True:
+        await asyncio.sleep(KEEP_ALIVE_INTERVAL)
+        try:
+            urlopen(url, timeout=10)
+            logger.info("[keep-alive] Self-ping OK")
+        except Exception as exc:
+            logger.warning("[keep-alive] Self-ping failed: %s", exc)
+
 
 # ── Application lifecycle ────────────────────────────────────────────────
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Warm up models on startup; log shutdown."""
-    warmup()
-    logger.info("Spam-detection API ready to serve")
+    # Note: we don't call warmup() here to prevent health check timeouts on Render Free Tier
+    logger.info("Spam-detection API ready to serve (models will load on first request)")
+
+    # Start keep-alive background task
+    keep_alive_task = asyncio.create_task(_keep_alive_loop())
+    logger.info("[keep-alive] Started — pinging every %d min", KEEP_ALIVE_INTERVAL // 60)
+
     yield
+
+    keep_alive_task.cancel()
     logger.info("Spam-detection API shutting down …")
 
 

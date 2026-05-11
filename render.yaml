@@ -34,6 +34,8 @@ services:
         sync: false  # Set to your client URL (e.g., https://spam-client.onrender.com)
       - key: ML_API_URL
         sync: false  # Set to your ML API URL (e.g., https://spam-model-api.onrender.com)
+      - key: RENDER_EXTERNAL_URL
+        sync: false  # Set to https://spam-node-server.onrender.com
 
   # ── 3. React/Vite Static Frontend ─────────────────────────────────────
   - type: web

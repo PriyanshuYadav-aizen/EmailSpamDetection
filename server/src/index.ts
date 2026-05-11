@@ -36,10 +36,43 @@ app.get("/health", (_req, res) => {
 
 app.use("/api", emailRoutes);
 
+// ── Keep-alive pinger ────────────────────────────────────────────────────
+// Render free-tier spins down services after ~15 min of inactivity.
+// We self-ping every 5 min to stay awake, and also ping the ML API.
+const KEEP_ALIVE_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+
+function startKeepAlive() {
+  const selfUrl = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
+  const mlApiUrl = process.env.ML_API_URL;
+
+  setInterval(async () => {
+    try {
+      await fetch(`${selfUrl}/health`);
+      console.log("[keep-alive] Self-ping OK");
+    } catch (err) {
+      console.warn("[keep-alive] Self-ping failed:", (err as Error).message);
+    }
+
+    if (mlApiUrl) {
+      try {
+        await fetch(`${mlApiUrl}/health`);
+        console.log("[keep-alive] ML API ping OK");
+      } catch (err) {
+        console.warn("[keep-alive] ML API ping failed:", (err as Error).message);
+      }
+    }
+  }, KEEP_ALIVE_INTERVAL_MS);
+
+  console.log(
+    `[keep-alive] Started — pinging every ${KEEP_ALIVE_INTERVAL_MS / 60000} min`
+  );
+}
+
 const startServer = async () => {
   await connectDB();
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
+    startKeepAlive();
   });
 };
 
